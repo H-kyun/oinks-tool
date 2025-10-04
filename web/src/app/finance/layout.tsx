@@ -1,0 +1,11 @@
+export default function FinanceLayout({
+    children,
+  }: Readonly<{
+    children: React.ReactNode;
+  }>) {
+    return (
+      <div className="flex">
+        <div className="flex-1 mt-[40px] p-4">{children}</div>
+      </div>
+    );
+}

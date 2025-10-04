@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #fff;
+  --bg-secondary:#ececec;
+  --bg-scrim: #000;
+  --bg-icon: #fff;
+  --shadow-color: 0 0% 80%;
+  /* --focus_primary:
+  --primary:
+  --primary-foreground: */
+  /* text */
+  --text-primary: #000;
+  --text-secondary:#D1D5DB;
+  /* --text-muted:
+  --text-inverse: */
+   /* border */
+  --border-color: #E5E7EB;
+  --border-strong: 
+  --surface:
+  --divider:
+  /* button*/
+  --success:
+  --error:
+  --warning:
+  --info:
+}
+
+.dark {
+  --bg-primary: #1a1a1e;
+  --bg-secondary:#121214;
+  --bg-scrim: #fff;
+  --bg-icon:#202021;
+  --shadow-color: 0 0% 100%;
+  /* --focus_primary:
+  --primary:
+  --primary-foreground: */
+  /* text */
+  --text-primary: #fff;
+  --text-secondary: #6B7280;
+  /* --text-muted:
+  --text-inverse: */
+   /* border */
+  --border-color: #282829;
+  --border-strong:
+  --surface:
+  --divider:
+  /* button*/
+  --success:
+  --error:
+  --warning:
+  --info:
+}
+/* border */
+.borderLine {                        
+  background-color: var(--border-color); 
+}
+/* main screen */
+
+/* sidebar screen */
+.sideBar{
+  background-color: var(--bg-secondary);
+}
+.sideBarItemCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.sideBarItem {
+  width: 40px;
+  height: 38px;
+  transition: color 0.2s ease;
+  border-radius: 13px;
+}
+.sideBarItem:hover {
+  background-color: hsl(var(--shadow-color) / 0.3);
+}
+.sideBarItemFocused {
+  width: 40px;
+  height: 38px;
+  transition: color 0.2s ease;
+  border-radius: 13px;
+}
+.sideBarItemFocused:hover {
+  background-color: hsl(var(--shadow-color) / 0.3);
+}
+.sideBarMain{
+  background-color: var(--bg-secondary);
+}
