@@ -1,9 +1,11 @@
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import sidebarReducer from "./sidebarSlice";
+import calendarReducer from "./calendarSlice copy";
 
 // 1) 루트 리듀서 먼저 선언
 const rootReducer = combineReducers({
   sidebar: sidebarReducer,
+  calendar: calendarReducer,
 });
 
 // 2) 루트 상태 타입
@@ -12,6 +14,7 @@ export type RootState = ReturnType<typeof rootReducer>;
 // 3) (선호하는 스타일) 슬라이스별 preloadedState 인터페이스
 export interface PreloadedState {
   sidebar?: ReturnType<typeof sidebarReducer>;
+  calendar?: ReturnType<typeof calendarReducer>;
 }
 
 // 4) store 생성
