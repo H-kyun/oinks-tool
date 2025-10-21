@@ -1,3 +1,5 @@
+import SidebarCalendar from "@/components/sidebar/calendar/SidebarCalendar";
+import SidebarMainNav from "@/components/sidebar/MainNav";
 import React from "react";
 
 
@@ -8,8 +10,14 @@ export default function CalendarLayout({
   }>) {
     return (
       <div className="flex flex-1">
-      {/*mian*/}
-      <div className="flex-1 w-full p-4 h-full bg-[var(--bg-primary)] rounded-t-[13px]">{children}</div>
-    </div>
+        <aside className="flex h-full overflow-hidden">
+            <SidebarMainNav/>
+            <SidebarCalendar/>
+        </aside>
+        {/*mian*/}
+        <main className="flex-1 w-full h-full overflow-y-auto contentsCard">
+          {children}
+        </main>
+      </div>
     );
 }

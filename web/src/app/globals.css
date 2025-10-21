@@ -1,25 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #fff;
-  --bg-secondary:#ececec;
-  --bg-scrim: #000;
+  --bg-primary: #ffffff;
+  --bg-secondary:#f2f3f5;
+  --bg-tertiary:#e3e5e8;
+  --bg-elevated:#ebedef;
   --bg-icon: #fff;
-  --shadow-color: 0 0% 80%;
-  /* --focus_primary:
-  --primary:
-  --primary-foreground: */
+  --shadow-color: 0 0% 60%;
   /* text */
-  --text-primary: #000;
-  --text-secondary:#D1D5DB;
-  /* --text-muted:
-  --text-inverse: */
+  --text-primary: #060607;
+  --text-secondary:#4e5058;
+  --text-muted: #80848e;
+  --text-primary-re: #f2f3f5;
    /* border */
-  --border-color: #E5E7EB;
-  --border-strong: 
-  --surface:
-  --divider:
+  --border-color: #e3e5e8;
+  --border-strong: #d1d4d8;
   /* button*/
+  --red-btn: #EF4444;
   --success:
   --error:
   --warning:
@@ -27,40 +24,87 @@
 }
 
 .dark {
-  --bg-primary: #1a1a1e;
-  --bg-secondary:#121214;
-  --bg-scrim: #fff;
-  --bg-icon:#202021;
-  --shadow-color: 0 0% 100%;
-  /* --focus_primary:
-  --primary:
-  --primary-foreground: */
+  --bg-primary: #1e1f22;
+  --bg-secondary:#111214;
+  --bg-tertiary:#0a0b0d;
+  --bg-elevated:#2b2d31;
+  --bg-icon:#2b2d31;
+  --shadow-color: 0 0% 60%;
   /* text */
-  --text-primary: #fff;
-  --text-secondary: #6B7280;
-  /* --text-muted:
-  --text-inverse: */
+  --text-primary: #f2f3f5;
+  --text-secondary: #b5bac1;
+  --text-muted:#80848e;
+  --text-primary-re:#060607;
    /* border */
-  --border-color: #282829;
-  --border-strong:
-  --surface:
-  --divider:
+  --border-color: #2b2d31;
+  --border-strong: #40444b;
   /* button*/
+  --red-btn: #DC2626;
   --success:
   --error:
   --warning:
   --info:
 }
 /* border */
-.borderLine {                        
-  background-color: var(--border-color); 
+.borderLine{
+  border-color: var(--border-color);
+}
+.borderStrong{
+  border-color: var(--border-strong);
+}
+/* hover */
+.hover-overlay {
+  position: relative;
+}
+
+.hover-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-color: hsl(var(--shadow-color) / 0);
+  transition: background-color 0.2s ease;
+  pointer-events: none;
+  border-radius: inherit; /* 부모의 border-radius 상속 */
+}
+
+.hover-overlay:hover::before {
+  background-color: hsl(var(--shadow-color) / 0.3);
 }
 /* main screen */
+
+
+/* contents screen */
+.contentsCard{
+  background-color: var(--bg-primary);
+}
+.secondCard{
+  background-color: var(--bg-secondary);
+}
+.borderCard{
+  background-color: var(--border-color);
+}
+.textPrimary{
+  color: var(--text-primary);
+}
+.textSecond{
+  color: var(--text-muted);
+}
 
 /* sidebar screen */
 .sideBar{
   background-color: var(--bg-secondary);
 }
+.sideBarFocus:hover{
+  background-color: hsl(var(--shadow-color) / 0.16);
+}
+.sideBarFocus:has(.buttonFocus:hover) {
+  background-color: transparent;
+}
+.buttonFocus:hover {
+  background-color: hsl(var(--shadow-color) / 0.16);
+}
+
+
 .sideBarItemCenter {
   display: flex;
   justify-content: center;
@@ -73,7 +117,7 @@
   border-radius: 13px;
 }
 .sideBarItem:hover {
-  background-color: hsl(var(--shadow-color) / 0.3);
+  background-color: hsl(var(--shadow-color) / 0.2);
 }
 .sideBarItemFocused {
   width: 40px;

@@ -4,6 +4,7 @@ import React from "react";
 import ReduxProvider from "./_core/_providers/redux_provider";
 import { readSidebarPref } from "./_core/_server/sidebar_pref";
 import { Inter } from "next/font/google";
+import { ModalProvider } from "./_core/_providers/modal_provider";
 
 
 export const metadata: Metadata = {
@@ -32,27 +33,22 @@ export default async function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `(function() {
               try {
-                var ls = localStorage.getItem('theme'); // 사용자가 저장한 테마(light/dark)
+                var ls = localStorage.getItem('theme');
                 var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 var useDark = ls ? (ls === 'dark') : systemDark;
                 var root = document.documentElement;
-                root.classList.toggle('dark', useDark); // html.dark 붙여줌
-                root.style.colorScheme = useDark ? 'dark' : 'light'; // 스크롤바/폼 UI도 맞춤
+                root.classList.toggle('dark', useDark);
+                root.style.colorScheme = useDark ? 'dark' : 'light';
               } catch (e) {}
-            })();
-                      `,
+            })();`,
           }}
         />
       </head>
-      <body className="flex min-h-screen bg-[var(--bg-secondary)]">
+      <body className="flex h-screen bg-[var(--bg-secondary)] overflow-hidden">  {/* h-screen + overflow-hidden */}
         <ReduxProvider initialSidebarOpen={initialOpen}>
-          <div className="flex-1 flex">
-            <aside className="h-full">
-            </aside>
-            <main className="flex-1 flex">
-              {children}
-            </main>
-          </div>
+          <ModalProvider>
+            {children}
+          </ModalProvider>
         </ReduxProvider>
       </body>
     </html>

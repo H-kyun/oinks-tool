@@ -1,0 +1,346 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model account_holding {
+  id                BigInt   @id @default(autoincrement())
+  user_id           BigInt
+  account_id        BigInt   @unique(map: "ux_acct_hold_unique")
+  current_balance   Decimal  @default(0) @db.Decimal(18, 2)
+  available_balance Decimal? @db.Decimal(18, 2)
+  credit_limit      Decimal? @db.Decimal(18, 2)
+  available_credit  Decimal? @db.Decimal(18, 2)
+  statement_balance Decimal? @db.Decimal(18, 2)
+  currency          String   @default("KRW") @db.Char(3)
+  updated_at        DateTime @default(now()) @db.Timestamptz(6)
+  accounts          accounts @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "ix_hold_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model accounts {
+  id                                                   BigInt             @id @default(autoincrement())
+  uuid                                                 String             @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                                              BigInt
+  name                                                 String             @db.VarChar(80)
+  type                                                 String             @db.VarChar(16)
+  currency                                             String             @default("KRW") @db.Char(3)
+  institution                                          String?            @db.VarChar(80)
+  last4                                                String?            @db.VarChar(8)
+  opened_at                                            DateTime?          @db.Date
+  closed_at                                            DateTime?          @db.Date
+  is_active                                            Boolean            @default(true)
+  created_at                                           DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                                           DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at                                           DateTime?          @db.Timestamptz(6)
+  account_holding                                      account_holding?
+  budget_record_budget_record_in_account_idToaccounts  budget_record[]    @relation("budget_record_in_account_idToaccounts")
+  budget_record_budget_record_out_account_idToaccounts budget_record[]    @relation("budget_record_out_account_idToaccounts")
+  card_statements                                      card_statements[]
+  recurring_budget                                     recurring_budget[]
+}
+
+model auth_nonces {
+  id                 BigInt    @id @default(autoincrement())
+  nonce              String    @unique @db.VarChar(64)
+  chain              String    @db.VarChar(16)
+  address_normalized String    @db.VarChar(128)
+  domain             String    @db.VarChar(120)
+  issued_at          DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at         DateTime  @db.Timestamptz(6)
+  consumed_at        DateTime? @db.Timestamptz(6)
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model budget_category {
+  id                    BigInt             @id @default(autoincrement())
+  user_id               BigInt
+  created_at            DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at            DateTime?          @db.Timestamptz(6)
+  name                  String             @db.VarChar(60)
+  color                 String?            @db.VarChar(16)
+  parent_id             BigInt?
+  is_system             Boolean            @default(false)
+  sort_order            Int?
+  budget_category       budget_category?   @relation("budget_categoryTobudget_category", fields: [parent_id], references: [id], onUpdate: NoAction)
+  other_budget_category budget_category[]  @relation("budget_categoryTobudget_category")
+  users                 users              @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  budget_record         budget_record[]
+  recurring_budget      recurring_budget[]
+
+  @@index([parent_id], map: "ix_bcat_parent")
+  @@index([user_id], map: "ix_bcat_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model budget_record {
+  id                                              BigInt           @id @default(autoincrement())
+  user_id                                         BigInt
+  created_at                                      DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at                                      DateTime         @default(now()) @db.Timestamptz(6)
+  deleted_at                                      DateTime?        @db.Timestamptz(6)
+  event_at                                        DateTime         @db.Timestamptz(6)
+  statement_at                                    DateTime?        @db.Timestamptz(6)
+  category_id                                     BigInt?
+  type                                            String           @db.VarChar(12)
+  parent_id                                       BigInt?
+  related_record_id                               BigInt?
+  amount                                          Decimal          @db.Decimal(15, 2)
+  currency                                        String           @default("KRW") @db.Char(3)
+  exchange_rate                                   Decimal?         @db.Decimal(18, 8)
+  fee_amount                                      Decimal?         @db.Decimal(15, 2)
+  in_account_id                                   BigInt?
+  out_account_id                                  BigInt?
+  status                                          String           @default("posted") @db.VarChar(12)
+  memo                                            String?
+  budget_category                                 budget_category? @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  accounts_budget_record_in_account_idToaccounts  accounts?        @relation("budget_record_in_account_idToaccounts", fields: [in_account_id], references: [id], onUpdate: NoAction)
+  accounts_budget_record_out_account_idToaccounts accounts?        @relation("budget_record_out_account_idToaccounts", fields: [out_account_id], references: [id], onUpdate: NoAction)
+  users                                           users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([category_id], map: "ix_brec_category")
+  @@index([in_account_id], map: "ix_brec_in_account")
+  @@index([out_account_id], map: "ix_brec_out_account")
+  @@index([parent_id], map: "ix_brec_parent")
+  @@index([related_record_id], map: "ix_brec_related")
+  @@index([user_id, event_at(sort: Desc)], map: "ix_brec_user_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model calendar_schedules {
+  id                   BigInt                @id @default(autoincrement())
+  uuid                 String                @unique @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id              BigInt
+  category_id          BigInt?
+  title                String                @db.VarChar(120)
+  contents             String?
+  location             String?               @db.VarChar(200)
+  is_all_day           Boolean               @default(false)
+  start_at             DateTime              @db.Timestamptz(6)
+  end_at               DateTime              @db.Timestamptz(6)
+  timezone             String?               @default("Asia/Seoul") @db.VarChar(40)
+  people               String?
+  is_recurring         Boolean               @default(false)
+  rrule                String?
+  exdate               String?
+  visibility           String                @default("private") @db.VarChar(12)
+  status               String                @default("confirmed") @db.VarChar(12)
+  created_at           DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime              @default(now()) @db.Timestamptz(6)
+  deleted_at           DateTime?             @db.Timestamptz(6)
+  schedules_categories schedules_categories? @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  schedule_overrides   schedule_overrides[]
+
+  @@index([category_id], map: "ix_cal_category")
+  @@index([user_id, start_at], map: "ix_cal_user_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model card_statements {
+  id               BigInt    @id @default(autoincrement())
+  account_id       BigInt
+  period_start     DateTime  @db.Date
+  period_end       DateTime  @db.Date
+  close_date       DateTime? @db.Date
+  due_date         DateTime  @db.Date
+  statement_amount Decimal   @db.Decimal(18, 2)
+  paid_amount      Decimal   @default(0) @db.Decimal(18, 2)
+  currency         String    @default("KRW") @db.Char(3)
+  status           String    @default("open") @db.VarChar(12)
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime  @default(now()) @db.Timestamptz(6)
+  accounts         accounts  @relation(fields: [account_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([account_id, period_start, period_end], map: "ux_stmt_account_period")
+  @@index([account_id, due_date], map: "ix_stmt_account_due")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model finance_instruments {
+  id             BigInt           @id @default(autoincrement())
+  created_at     DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime         @default(now()) @db.Timestamptz(6)
+  symbol         String           @db.VarChar(32)
+  name           String?          @db.VarChar(120)
+  class          String           @db.VarChar(16)
+  base_currency  String           @db.Char(3)
+  exchange       String?          @db.VarChar(32)
+  isin           String?          @db.VarChar(12)
+  attrs          Json?
+  finance_prices finance_prices[]
+
+  @@unique([symbol, class, exchange], map: "ux_instr_sym_class_ex")
+}
+
+model finance_positions {
+  id            BigInt   @id @default(autoincrement())
+  user_id       BigInt
+  account_id    BigInt
+  instrument_id BigInt
+  qty           Decimal  @default(0) @db.Decimal(24, 8)
+  avg_cost      Decimal  @default(0) @db.Decimal(20, 8)
+  currency      String   @db.Char(3)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([account_id, instrument_id], map: "ux_finpos_unique")
+  @@index([user_id, account_id], map: "ix_finpos_user_acct")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model finance_prices {
+  id                  BigInt              @id @default(autoincrement())
+  instrument_id       BigInt
+  ts                  DateTime            @db.Timestamptz(6)
+  interval            String              @db.VarChar(10)
+  open                Decimal             @db.Decimal(20, 8)
+  high                Decimal             @db.Decimal(20, 8)
+  low                 Decimal             @db.Decimal(20, 8)
+  close               Decimal             @db.Decimal(20, 8)
+  volume              Decimal?            @db.Decimal(20, 8)
+  currency            String              @db.Char(3)
+  created_at          DateTime            @default(now()) @db.Timestamptz(6)
+  finance_instruments finance_instruments @relation(fields: [instrument_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([instrument_id, interval, ts], map: "ux_prices_unique")
+  @@index([instrument_id, interval, ts(sort: Desc)], map: "ix_prices_instr_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model finance_record {
+  id            BigInt    @id @default(autoincrement())
+  user_id       BigInt
+  account_id    BigInt
+  instrument_id BigInt?
+  ts            DateTime  @db.Timestamptz(6)
+  settle_date   DateTime? @db.Date
+  type          String    @db.VarChar(16)
+  qty           Decimal?  @db.Decimal(24, 8)
+  price         Decimal?  @db.Decimal(20, 8)
+  gross_amount  Decimal?  @db.Decimal(20, 8)
+  fee_amount    Decimal?  @db.Decimal(20, 8)
+  tax_amount    Decimal?  @db.Decimal(20, 8)
+  currency      String    @db.Char(3)
+  fx_rate       Decimal?  @db.Decimal(20, 10)
+  memo          String?
+  source        String?   @db.VarChar(40)
+  import_id     String?   @db.VarChar(120)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@index([instrument_id, ts], map: "ix_finrec_instr_time")
+  @@index([user_id, account_id, ts(sort: Desc)], map: "ix_finrec_user_acct_time")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model recurring_budget {
+  id              BigInt           @id @default(autoincrement())
+  user_id         BigInt
+  name            String           @db.VarChar(80)
+  merchant_id     BigInt?
+  category_id     BigInt?
+  account_id      BigInt?
+  amount          Decimal          @db.Decimal(15, 2)
+  currency        String           @default("KRW") @db.Char(3)
+  rrule           String
+  timezone        String           @default("Asia/Seoul") @db.VarChar(40)
+  next_run_at     DateTime?        @db.Timestamptz(6)
+  auto_post       Boolean          @default(true)
+  status          String           @default("active") @db.VarChar(12)
+  max_amount      Decimal?         @db.Decimal(15, 2)
+  note            String?
+  created_at      DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime         @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime?        @db.Timestamptz(6)
+  accounts        accounts?        @relation(fields: [account_id], references: [id], onUpdate: NoAction)
+  budget_category budget_category? @relation(fields: [category_id], references: [id], onUpdate: NoAction)
+  users           users            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([next_run_at], map: "ix_rtpl_next_run")
+  @@index([user_id, status], map: "ix_rtpl_user_status")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model schedule_overrides {
+  id                 BigInt             @id @default(autoincrement())
+  schedule_id        BigInt
+  occurrence_start   DateTime           @db.Timestamptz(6)
+  new_start          DateTime?          @db.Timestamptz(6)
+  new_end            DateTime?          @db.Timestamptz(6)
+  new_title          String?            @db.VarChar(120)
+  new_contents       String?
+  new_location       String?            @db.VarChar(200)
+  new_status         String?            @db.VarChar(12)
+  created_at         DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime           @default(now()) @db.Timestamptz(6)
+  calendar_schedules calendar_schedules @relation(fields: [schedule_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([schedule_id, occurrence_start])
+  @@index([schedule_id, occurrence_start], map: "ix_ovr_sched_occ")
+}
+
+model schedules_categories {
+  id                         BigInt                 @id @default(autoincrement())
+  user_id                    BigInt
+  parent_id                  BigInt?
+  name                       String                 @db.VarChar(40)
+  color                      String?                @db.VarChar(16)
+  sort_order                 Int?
+  created_at                 DateTime               @default(now()) @db.Timestamptz(6)
+  updated_at                 DateTime               @default(now()) @db.Timestamptz(6)
+  deleted_at                 DateTime?              @db.Timestamptz(6)
+  calendar_schedules         calendar_schedules[]
+  schedules_categories       schedules_categories?  @relation("schedules_categoriesToschedules_categories", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_schedules_categories schedules_categories[] @relation("schedules_categoriesToschedules_categories")
+
+  @@index([user_id], map: "ix_scat_user")
+}
+
+model user_wallets {
+  id                                          BigInt   @id @default(autoincrement())
+  user_id                                     BigInt
+  chain                                       String   @db.VarChar(16)
+  address                                     String   @db.VarChar(128)
+  address_normalized                          String   @db.VarChar(128)
+  label                                       String?  @db.VarChar(40)
+  created_at                                  DateTime @default(now()) @db.Timestamptz(6)
+  users_user_wallets_user_idTousers           users    @relation("user_wallets_user_idTousers", fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users_users_primary_wallet_idTouser_wallets users[]  @relation("users_primary_wallet_idTouser_wallets")
+
+  @@unique([chain, address_normalized])
+  @@index([address_normalized], map: "ix_wallets_addr")
+  @@index([user_id], map: "ix_wallets_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model users {
+  id                                                 BigInt             @id @default(autoincrement())
+  uuid                                               String             @unique(map: "ux_users_uuid") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  created_at                                         DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at                                         DateTime           @default(now()) @db.Timestamptz(6)
+  deleted_at                                         DateTime?          @db.Timestamptz(6)
+  role                                               String             @default("user") @db.VarChar(16)
+  last_login_at                                      DateTime?          @db.Timestamptz(6)
+  is_verified                                        Boolean            @default(true)
+  provider                                           String             @default("wallet") @db.VarChar(32)
+  status                                             String             @default("active") @db.VarChar(16)
+  user_name                                          String?            @db.VarChar(60)
+  language                                           String?            @default("ko") @db.Char(5)
+  currency                                           String?            @default("KRW") @db.Char(3)
+  timezone                                           String?            @default("Asia/Seoul") @db.VarChar(40)
+  date_format                                        String?            @default("YYYY-MM-DD") @db.VarChar(20)
+  theme                                              String?            @default("light") @db.VarChar(20)
+  notification_pref                                  Json?
+  primary_wallet_id                                  BigInt?
+  budget_category                                    budget_category[]
+  budget_record                                      budget_record[]
+  recurring_budget                                   recurring_budget[]
+  user_wallets_user_wallets_user_idTousers           user_wallets[]     @relation("user_wallets_user_idTousers")
+  user_wallets_users_primary_wallet_idTouser_wallets user_wallets?      @relation("users_primary_wallet_idTouser_wallets", fields: [primary_wallet_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_users_primary_wallet")
+}

@@ -1,6 +1,6 @@
-export default function Asset() {
+export default function Budget() {
     return (
-      <div className="flex-1">asset</div>
+      <div className="flex-1">Budget</div>
     );
   }
   
