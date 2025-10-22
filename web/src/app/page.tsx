@@ -16,7 +16,7 @@ export default function Home() {
                 calendar
               </div>
               <div className="flex-1 rounded-[20px] bg-[var(--bg-primary)] m-[5px] border-2 borderLine">
-                budget usable 
+                budget usable
               </div>
             </div>
             <div className="flex h-[400px] pl-[20px] pr-[40px] ">
